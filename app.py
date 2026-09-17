@@ -74,31 +74,43 @@ with tab1:
                 res = model.generate_content([prompt, f"Nội dung học viên gửi:\n{user_code}"])
                 st.markdown(res.text)
 
-# ================= TAB 2: BÀI TẬP THỬ THÁCH =================
+# ================= TAB 2: BÀI TẬP THỬ THÁCH (TỐI ƯU TỐC ĐỘ) =================
 with tab2:
     st.subheader("Tự Tạo Bài Tập Luyện Tư Duy")
     topic = st.text_input(
         "Chủ đề muốn luyện tập (không bắt buộc):",
-        placeholder="Ví dụ: Vòng lặp For, Mảng 2 chiều, Truy vấn SQL JOIN, Con trỏ C++..."
+        placeholder="Ví dụ: Vòng lặp For, Mảng 2 chiều, Truy vấn SQL JOIN..."
     )
 
     if st.button("🎲 Tạo Thử Thách Mới", type="primary", use_container_width=True, key="btn_challenge"):
-        with st.spinner(f"🎲 AI đang soạn bài tập {prog_lang} phù hợp với [{dev_level}]..."):
-            test_prompt = f"""
-            Tạo 1 bài tập lập trình ngôn ngữ **{prog_lang}** cho trình độ **{dev_level}**.
-            Chủ đề ưu tiên: **{topic if topic else 'Tổng hợp kiến thức đúng trình độ'}**.
+        test_prompt = f"""
+        BẮT ĐẦU NGAY VÀO ĐỀ BÀI, KHÔNG CHÀO HỎI HAY VIẾT MỞ BÀI.
+        Tạo 1 bài tập lập trình {prog_lang} cho trình độ {dev_level}.
+        Chủ đề: {topic if topic else 'Tổng hợp kiến thức đúng trình độ'}.
 
-            Trình bày theo cấu trúc Markdown sau:
-            ### 📝 Đề Bài: [Tên bài tập]
-            - **Mô tả bài toán**:
-            - **Đầu vào (Input)** & **Đầu ra (Output)**:
-            - **Ví dụ mẫu (Test case)**:
+        Trình bày ngắn gọn:
+        ### 📝 Đề Bài: [Tên bài tập]
+        - **Mô tả ngắn**:
+        - **Input / Output mẫu**:
 
-            ---
-            ### 🔑 Hướng Dẫn & Đáp Án Mẫu
-            - **Gợi ý thuật toán**: 
-            - **Mã nguồn chuẩn**: Code đầy đủ kèm chú thích giải thích chi tiết từng dòng.
-            """
+        ---
+        ### 🔑 Hướng Dẫn & Đáp Án
+        - **Gợi ý**: 2 dòng ngắn gọn.
+        - **Code mẫu**: Code ngắn, sạch, có comment ngắn gọn.
+        """
+        
+        # Cấu hình giới hạn độ dài để AI tạo cực nhanh
+        fast_config = genai.types.GenerationConfig(
+            max_output_tokens=700,
+            temperature=0.3
+        )
+        
+        with st.spinner("⚡ AI đang tạo đề..."):
+            response = model.generate_content(test_prompt, generation_config=fast_config, stream=True)
             
-            res_test = model.generate_content(test_prompt)
-            st.markdown(res_test.text)
+            # Hàm hiển thị chữ chảy ra từng dòng
+            def stream_data():
+                for chunk in response:
+                    yield chunk.text
+
+            st.write_stream(stream_data)
