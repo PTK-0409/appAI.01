@@ -17,9 +17,9 @@ if not api_key:
     st.info("💡 Vui lòng nhập Gemini API Key ở thanh bên trái để khởi chạy ứng dụng!")
     st.stop()
 
-# Khởi tạo mô hình AI
+# Khởi tạo mô hình AI với model chuẩn tốc độ cao
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-2.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # 2. CHỌN NGÔN NGỮ LẬP TRÌNH VÀ CẤP BẬC HỌC
 col1, col2 = st.columns(2)
@@ -59,22 +59,24 @@ with tab1:
         if not user_code:
             st.warning("⚠️ Vui lòng nhập nội dung thắc mắc hoặc dán đoạn code vào!")
         else:
-            with st.spinner("🤖 AI đang phân tích logic code..."):
-                prompt = f"""
-                Bạn là một Chuyên gia Lập trình và Mentor dạy code cực kỳ kiên nhẫn.
-                Học viên đang học ngôn ngữ: **{prog_lang}** ở trình độ: **{dev_level}**.
+            prompt = f"""
+            Bạn là một Mentor dạy lập trình kiên nhẫn.
+            Ngôn ngữ: **{prog_lang}**, Trình độ: **{dev_level}**.
 
-                Hãy xử lý yêu cầu sau đây và trả lời bằng Tiếng Việt theo cấu trúc:
-                1. **🔍 Phân Tích Vấn Đề / Lỗi Sai**: Chỉ rõ nguyên nhân hoặc bản chất thuật toán bằng ngôn từ dễ hiểu.
-                2. **💡 Ý Tưởng Giải Quyết (Pseudocode)**: Giải thích tư duy các bước xử lý trước khi viết code.
-                3. **💻 Mã Nguồn Chuẩn**: Đưa ra đoạn code hoàn chỉnh, sạch sẽ, có chú thích (comment) chi tiết ở từng dòng quan trọng.
-                4. **⚡ Mẹo Tối Ưu Code**: 1 lời khuyên ngắn giúp code chạy nhanh hơn hoặc tránh lỗi logic phổ biến.
-                """
-                
-                res = model.generate_content([prompt, f"Nội dung học viên gửi:\n{user_code}"])
-                st.markdown(res.text)
+            Hãy trả lời bằng Tiếng Việt theo 4 phần:
+            1. 🔍 Phân Tích Vấn Đề / Lỗi Sai
+            2. 💡 Ý Tưởng Giải Quyết (Pseudocode)
+            3. 💻 Mã Nguồn Chuẩn (có comment giải thích)
+            4. ⚡ Mẹo Tối Ưu Code
+            """
+            try:
+                # Dùng streaming để chữ ra ngay lập tức
+                response = model.generate_content([prompt, f"Nội dung học viên gửi:\n{user_code}"], stream=True)
+                st.write_stream(chunk.text for chunk in response)
+            except Exception as e:
+                st.error(f"❌ Có lỗi xảy ra: {e}")
 
-# ================= TAB 2: BÀI TẬP THỬ THÁCH (TỐI ƯU TỐC ĐỘ) =================
+# ================= TAB 2: BÀI TẬP THỬ THÁCH =================
 with tab2:
     st.subheader("Tự Tạo Bài Tập Luyện Tư Duy")
     topic = st.text_input(
@@ -88,29 +90,20 @@ with tab2:
         Tạo 1 bài tập lập trình {prog_lang} cho trình độ {dev_level}.
         Chủ đề: {topic if topic else 'Tổng hợp kiến thức đúng trình độ'}.
 
-        Trình bày ngắn gọn:
+        Trình bày theo dạng Markdown:
         ### 📝 Đề Bài: [Tên bài tập]
         - **Mô tả ngắn**:
         - **Input / Output mẫu**:
 
         ---
         ### 🔑 Hướng Dẫn & Đáp Án
-        - **Gợi ý**: 2 dòng ngắn gọn.
-        - **Code mẫu**: Code ngắn, sạch, có comment ngắn gọn.
+        - **Gợi ý thuật toán**: 2 dòng ngắn gọn.
+        - **Mã nguồn chuẩn**: Code đầy đủ kèm chú thích giải thích chi tiết.
         """
         
-        # Cấu hình giới hạn độ dài để AI tạo cực nhanh
-        fast_config = genai.types.GenerationConfig(
-            max_output_tokens=700,
-            temperature=0.3
-        )
-        
-        with st.spinner("⚡ AI đang tạo đề..."):
-            response = model.generate_content(test_prompt, generation_config=fast_config, stream=True)
-            
-            # Hàm hiển thị chữ chảy ra từng dòng
-            def stream_data():
-                for chunk in response:
-                    yield chunk.text
-
-            st.write_stream(stream_data)
+        try:
+            # Tạo hiệu ứng chảy chữ siêu tốc
+            response = model.generate_content(test_prompt, stream=True)
+            st.write_stream(chunk.text for chunk in response)
+        except Exception as e:
+            st.error(f"❌ Có lỗi khi tạo bài test: {e}")
