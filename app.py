@@ -3,10 +3,10 @@ import google.generativeai as genai
 from PIL import Image
 
 # Cấu hình giao diện Web
-st.set_page_config(page_title="PolyGlot AI - Chuẩn Trình Độ Quốc Tế", page_icon="🌐", layout="centered")
+st.set_page_config(page_title="PolyGlot AI - Hỗ Trợ & Đánh Giá Trình Độ", page_icon="🎓", layout="centered")
 
-st.title("🌐 PolyGlot AI - Học Ngôn Ngữ Theo Khung Chuẩn Quốc Tế")
-st.caption("Tự động điều chỉnh bài giảng theo khung năng lực chuẩn: IELTS, HSK, JLPT, TOPIK, DELF...")
+st.title("🎓 PolyGlot AI - Trợ Lý & Kiểm Tra Ngôn Ngữ Đa Năng")
+st.caption("Hỗ trợ giải bài tập, tra cứu & tự động tạo bài test đánh giá trình độ chuẩn quốc tế")
 
 # 1. TỰ ĐỘNG LẤY API KEY
 api_key = st.secrets.get("GEMINI_API_KEY", "")
@@ -22,7 +22,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-# 2. ĐỊNH NGHĨA BẬC TRÌNH ĐỘ CHO TỪNG NGÔN NGỮ
+# 2. KHUNG TRÌNH ĐỘ CHUẨN THEO TỪNG NGÔN NGỮ
 LEVELS_BY_LANGUAGE = {
     "Tiếng Anh": [
         "🌱 Sơ cấp (Mới bắt đầu / Lớp 1-5)",
@@ -41,95 +41,111 @@ LEVELS_BY_LANGUAGE = {
         "🔵 HSK 6 (Cao cấp 2 - Chuyên gia)"
     ],
     "Tiếng Nhật": [
-        "🟢 JLPT N5 (Sơ cấp 1 - Bảng chữ cái & Bảng câu ngắn)",
-        "🟢 JLPT N4 (Sơ cấp 2 - Kanji cơ bản & Mẫu câu thông dụng)",
-        "🟡 JLPT N3 (Trung cấp - Giao tiếp hàng ngày)",
-        "🔴 JLPT N2 (Trung Cao cấp - Làm việc tại công ty Nhật)",
-        "🟣 JLPT N1 (Cao cấp - Đọc báo chí, tài liệu chuyên ngành)"
+        "🟢 JLPT N5 (Sơ cấp 1)",
+        "🟢 JLPT N4 (Sơ cấp 2)",
+        "🟡 JLPT N3 (Trung cấp)",
+        "🔴 JLPT N2 (Trung Cao cấp)",
+        "🟣 JLPT N1 (Cao cấp)"
     ],
     "Tiếng Hàn": [
-        "🟢 TOPIK 1 - Cấp 1 (Sơ cấp - Bảng chữ cái Hangeul)",
-        "🟢 TOPIK 1 - Cấp 2 (Sơ cấp - Giao tiếp hàng ngày)",
+        "🟢 TOPIK 1 - Cấp 1 (Sơ cấp)",
+        "🟢 TOPIK 1 - Cấp 2 (Sơ cấp)",
         "🟡 TOPIK 2 - Cấp 3 (Trung cấp 1)",
-        "🟡 TOPIK 2 - Cấp 4 (Trung cấp 2 - Thi du học)",
-        "🔴 TOPIK 2 - Cấp 5 & 6 (Cao cấp - Dịch thuật / Chuyên nghiệp)"
+        "🟡 TOPIK 2 - Cấp 4 (Trung cấp 2)",
+        "🔴 TOPIK 2 - Cấp 5 & 6 (Cao cấp)"
     ],
     "Tiếng Pháp": [
         "🇫🇷 DELF A1 (Nhập môn)",
         "🇫🇷 DELF A2 (Sơ cấp)",
         "🇫🇷 DELF B1 (Trung cấp)",
-        "🇫🇷 DELF B2 (Độc lập / Nâng cao)",
-        "🇫🇷 DALF C1 / C2 (Cao cấp / Thành thạo)"
+        "🇫🇷 DELF B2 (Nâng cao)"
     ],
     "Tiếng Đức": [
         "🇩🇪 Goethe A1 (Sơ cấp 1)",
         "🇩🇪 Goethe A2 (Sơ cấp 2)",
-        "🇩🇪 Goethe B1 (Trung cấp 1 - Thi du học nghề)",
-        "🇩🇪 Goethe B2 (Trung cấp 2)",
-        "🇩🇪 Goethe C1 / C2 (Cao cấp)"
+        "🇩🇪 Goethe B1 (Trung cấp 1)",
+        "🇩🇪 Goethe B2 (Trung cấp 2)"
     ]
 }
 
-# 3. GIAO DIỆN CHỌN NGÔN NGỮ VÀ TRÌNH ĐỘ TƯƠNG ỨNG
+# 3. THANH CHỌN NGÔN NGỮ VÀ TRÌNH ĐỘ
 col1, col2 = st.columns(2)
-
 with col1:
     target_lang = st.selectbox("🌐 Chọn Ngôn ngữ:", list(LEVELS_BY_LANGUAGE.keys()))
-
 with col2:
-    # Danh sách cấp bậc sẽ TỰ ĐỘNG THAY ĐỔI khi đổi Ngôn ngữ ở col1
-    selected_level = st.selectbox("🎯 Trình độ / Cấp bậc:", LEVELS_BY_LANGUAGE[target_lang])
+    selected_level = st.selectbox("🎯 Trình độ mục tiêu:", LEVELS_BY_LANGUAGE[target_lang])
 
 st.write("---")
 
-# 4. NHẬP NỘI DUNG DẠY / GIẢI BÀI
-user_text = st.text_area(
-    "✏️ Nhập đề bài tập, từ vựng hoặc đoạn văn cần trợ giúp:",
-    placeholder=f"Ví dụ: Dịch câu này, Phân tích ngữ pháp, Tra từ vựng chuẩn trình độ {selected_level}..."
-)
+# 4. CHIA TÍNH NĂNG THÀNH 2 TABS
+tab1, tab2 = st.tabs(["📝 Hướng Dẫn & Giải Bài", "🎯 Bài Test Đánh Giá Trình Độ"])
 
-uploaded_img = st.file_uploader("📷 Tải ảnh bài tập (nếu có):", type=["png", "jpg", "jpeg"])
+# ================= TAB 1: HƯỚNG DẪN & GIẢI BÀI =================
+with tab1:
+    st.subheader("Trợ lý Giải bài & Tra cứu")
+    user_text = st.text_area(
+        "✏️ Nhập đề bài tập, từ vựng hoặc đoạn văn:",
+        placeholder=f"Ví dụ: Giải thích ngữ pháp câu này, Dịch thuật, Tra từ vựng trình độ {selected_level}..."
+    )
+    uploaded_img = st.file_uploader("📷 Tải ảnh bài tập (nếu có):", type=["png", "jpg", "jpeg"])
 
-if uploaded_img:
-    img = Image.open(uploaded_img)
-    st.image(img, caption="Ảnh đề bài đã chọn", use_container_width=True)
+    if uploaded_img:
+        img = Image.open(uploaded_img)
+        st.image(img, caption="Ảnh đề bài đã chọn", use_container_width=True)
 
-# 5. XỬ LÝ VÀ PHÂN TÍCH THEO TRÌNH ĐỘ CHUẨN
-if st.button("✨ Hướng dẫn theo trình độ chuẩn của tôi", type="primary", use_container_width=True):
-    if not user_text and not uploaded_img:
-        st.warning("⚠️ Bạn hãy nhập nội dung câu hỏi hoặc tải ảnh bài tập lên nhé!")
-    else:
-        with st.spinner(f"🤖 AI đang soạn bài giảng chuẩn trình độ [{target_lang} - {selected_level}]..."):
+    if st.button("✨ Hướng dẫn bài tập", type="primary", use_container_width=True, key="btn_explain"):
+        if not user_text and not uploaded_img:
+            st.warning("⚠️ Bạn hãy nhập nội dung hoặc tải ảnh bài tập lên nhé!")
+        else:
+            with st.spinner("🤖 AI đang phân tích bài học..."):
+                prompt = f"""
+                Bạn là một chuyên gia dạy {target_lang}. Học sinh đang học ở trình độ **{selected_level}**.
+                Hãy giải thích bài tập/yêu cầu sau bằng Tiếng Việt phù hợp chính xác với trình độ này.
+                
+                Đưa ra câu trả lời gồm:
+                1. **🎯 Đáp án / Bản dịch chuẩn**
+                2. **🔍 Giải thích chi tiết**
+                3. **💡 Từ vựng & Ngữ pháp quan trọng**
+                4. **🌟 Mẹo ghi nhớ**
+                """
+                contents = [prompt]
+                if user_text: contents.append(f"Nội dung: {user_text}")
+                if uploaded_img: contents.append(img)
+                
+                res = model.generate_content(contents)
+                st.markdown(res.text)
+
+# ================= TAB 2: BÀI TEST ĐÁNH GIÁ TRÌNH ĐỘ =================
+with tab2:
+    st.subheader(f"Tạo đề kiểm tra trình độ: {selected_level}")
+    st.write("AI sẽ tự động tạo bộ câu hỏi kiểm tra gồm trắc nghiệm và điền từ để kiểm tra xem bạn đã đạt trình độ này chưa!")
+
+    num_questions = st.slider("Số lượng câu hỏi:", min_value=3, max_value=5, value=3)
+
+    if st.button("🎲 Bắt đầu làm bài test", type="primary", use_container_width=True, key="btn_test"):
+        with st.spinner(f"🎲 AI đang soạn {num_questions} câu hỏi kiểm tra trình độ {selected_level}..."):
+            test_prompt = f"""
+            Hãy đóng vai là một Giám khảo kiểm tra ngôn ngữ {target_lang}.
+            Tạo một bài kiểm tra đánh giá năng lực gồm {num_questions} câu hỏi thuộc chuẩn trình độ **{selected_level}**.
+
+            **Yêu cầu đề thi:**
+            - Bao gồm các dạng: Trắc nghiệm tìm đáp án đúng, Chọn từ điền vào chỗ trống, Tìm lỗi sai.
+            - Trình bày đề bài rõ ràng, dễ nhìn.
+            - Đặt phần **ĐÁP ÁN & ĐÁNH GIÁ NĂNG LỰC** ở phía dưới cùng, trình bày ngắn gọn kèm giải thích.
+
+            Trình bày theo định dạng Markdown đẹp mắt:
+            ---
+            ### 📝 ĐỀ KIỂM TRA TRÌNH ĐỘ: {selected_level} ({target_lang})
+            (Các câu hỏi từ Câu 1 đến Câu {num_questions})
             
-            prompt = f"""
-            Bạn là một chuyên gia đào tạo ngôn ngữ {target_lang} chuẩn quốc tế.
-            Học sinh đang học ở trình độ: **{selected_level}**.
-
-            Hãy xử lý bài tập/yêu cầu dưới đây và trả lời bằng Tiếng Việt sao cho PHÙ HỢP CHÍNH XÁC với trình độ **{selected_level}**:
-
-            **Yêu cầu chuyên môn:**
-            1. **Nếu là Sơ cấp (A1/A2, HSK 1-2, N5-N4, TOPIK 1)**: 
-               - Giải thích bằng từ ngữ đơn giản, có phiên âm chi tiết (Pinyin, Romaji, Hangeul...).
-               - Tránh dùng các cấu trúc ngữ pháp quá phức tạp ngoài phạm vi trình độ này.
-            2. **Nếu là Trung cấp (B1/B2, HSK 3-4, N3-N2, TOPIK 3-4)**: 
-               - Phân tích rõ các ngữ pháp nền tảng, bẫy trắc nghiệm, các từ đồng nghĩa/trái nghĩa hay gặp trong đề thi chuẩn.
-            3. **Nếu là Cao cấp / Luyện thi (IELTS 6.5+, HSK 5-6, N1, TOPIK 5-6)**: 
-               - Phân tích sắc thái từ (Nuance), Collocations, cấu trúc nâng cao, ngữ cảnh trang trọng/văn viết.
-
-            **Cấu trúc câu trả lời:**
-            1. **🎯 ĐÁP ÁN / BẢN DỊCH CHUẨN**: Đáp án ngắn gọn, chính xác.
-            2. **🔍 GIẢI THÍCH CHI TIẾT (Phù hợp trình độ {selected_level})**: Phân tích vì sao chọn đáp án này, cấu trúc được sử dụng.
-            3. **💡 TỪ VỰNG CHUẨN TRÌNH ĐỘ**: 3-5 từ vựng/cụm từ thuộc đúng khung năng lực {selected_level} kèm phiên âm và nghĩa.
-            4. **🌟 MẸO LÀM BÀI / ĐIỂM CẦN LƯU Ý**: 1 lời khuyên giúp học sinh ăn điểm ở cấp độ này.
+            ---
+            ### 🔑 ĐÁP ÁN & GIẢI THÍCH CHI TIẾT
+            (Liệt kê đáp án từng câu và giải thích ngắn gọn lý do)
+            
+            ### 📊 THUẬT TOÁN ĐÁNH GIÁ TRÌNH ĐỘ:
+            - **Đạt {num_questions}/{num_questions} câu**: Bạn đã hoàn toàn vững vàng trình độ {selected_level}! Có thể thử sức lên cấp độ cao hơn.
+            - **Đạt 1-{num_questions-1} câu**: Bạn cần ôn tập thêm phần từ vựng/ngữ pháp còn hổng.
             """
             
-            contents = [prompt]
-            if user_text:
-                contents.append(f"Nội dung học sinh gửi: {user_text}")
-            if uploaded_img:
-                contents.append(img)
-                
-            response = model.generate_content(contents)
-            
-            st.success(f"🎉 Đã hoàn thành bài giảng chuẩn trình độ {selected_level}!")
-            st.markdown(response.text)
+            test_res = model.generate_content(test_prompt)
+            st.markdown(test_res.text)
